@@ -16,20 +16,14 @@ jobs:
           net user runneradmin "NetBird_RDP_2026!"
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          netsh advfirewall firewall add rule name="Allow Ping" protocol=icmpv4 dir=in action=allow
         shell: powershell
 
       - name: Install NetBird
         run: |
-          # Download from official permanent URL
           Invoke-WebRequest -Uri "https://pkgs.netbird.io/windows/x64" -OutFile "netbird-installer.exe"
-          
-          # Install silently
           .\netbird-installer.exe /S
-          
-          # Give the NetBird service 15 seconds to boot up
           Start-Sleep -Seconds 15
-          
-          # Connect to the network
           & "C:\Program Files\NetBird\netbird.exe" up --setup-key ${{ github.event.inputs.netbird_key }} --hostname ${{ github.event.inputs.machine_name }}
         shell: powershell
 
