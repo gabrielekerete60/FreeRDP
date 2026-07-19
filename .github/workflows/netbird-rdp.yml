@@ -20,11 +20,17 @@ jobs:
 
       - name: Install NetBird
         run: |
-          Invoke-WebRequest -Uri "https://github.com/netbirdio/netbird/releases/latest/download/netbird_windows_amd64.zip" -OutFile "netbird.zip"
-          Expand-Archive netbird.zip -DestinationPath "C:\netbird"
-          C:\netbird\netbird.exe install
-          C:\netbird\netbird.exe service start
-          C:\netbird\netbird.exe up --setup-key ${{ github.event.inputs.netbird_key }} --hostname ${{ github.event.inputs.machine_name }}
+          # Download from official permanent URL
+          Invoke-WebRequest -Uri "https://pkgs.netbird.io/windows/x64" -OutFile "netbird-installer.exe"
+          
+          # Install silently
+          .\netbird-installer.exe /S
+          
+          # Give the NetBird service 15 seconds to boot up
+          Start-Sleep -Seconds 15
+          
+          # Connect to the network
+          & "C:\Program Files\NetBird\netbird.exe" up --setup-key ${{ github.event.inputs.netbird_key }} --hostname ${{ github.event.inputs.machine_name }}
         shell: powershell
 
       - name: Keep Alive
