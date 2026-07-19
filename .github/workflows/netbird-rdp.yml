@@ -1,0 +1,32 @@
+name: Windows RDP via NetBird
+on: 
+  workflow_dispatch:
+    inputs:
+      machine_name:
+        required: true
+      netbird_key:
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Enable RDP
+        run: |
+          net user runneradmin "NetBird_RDP_2026!"
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        shell: powershell
+
+      - name: Install NetBird
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/netbirdio/netbird/releases/latest/download/netbird_windows_amd64.zip" -OutFile "netbird.zip"
+          Expand-Archive netbird.zip -DestinationPath "C:\netbird"
+          C:\netbird\netbird.exe install
+          C:\netbird\netbird.exe service start
+          C:\netbird\netbird.exe up --setup-key ${{ github.event.inputs.netbird_key }} --hostname ${{ github.event.inputs.machine_name }}
+        shell: powershell
+
+      - name: Keep Alive
+        run: Start-Sleep -Seconds 21600
+        shell: powershell
